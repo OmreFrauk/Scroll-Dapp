@@ -13,23 +13,22 @@ contract LookUpContract {
         string tokenCreateDate;
     }
 
-    address payable contractOwner =
+    address payable public contractOwner =
         payable(0x401f5a824A7FB97C97EFA151D525A55CD65fB7f3);
     uint256 public listingPrice = 0.025 ether;
 
-    mapping(uint256 => ERC20Token) private erc20Tokens;
-    uint256 public _tokenIndex;
+    ERC20Token[] private erc20Tokens;
 
     event ERC20TokenListed(
         uint256 indexed id,
         address indexed owner,
-        string indexed token
+        string indexed tokenAddress
     );
 
     modifier onlyOwner() {
         require(
             msg.sender == contractOwner,
-            "only owner can can change the listing price"
+            "Only owner can call this function"
         );
         _;
     }
@@ -37,11 +36,11 @@ contract LookUpContract {
     function createERC20Token(
         address _owner,
         string memory _tokenSupply,
-        string memory _tokneName,
+        string memory _tokenName,
         string memory _tokenSymbol,
         string memory _tokenAddress,
         string memory _tokenTxHash,
-        string memory _tokenCreatedDate
+        string memory _tokenCreateDate
     )
         external
         payable
@@ -54,47 +53,56 @@ contract LookUpContract {
             string memory
         )
     {
-        _tokenIndex++;
-        uint256 _tokenId = _tokenIndex;
-        ERC20Token storage erc20Token = erc20Tokens[_tokenId];
-        erc20Token.tokenID = _tokenId;
-        erc20Token.owner = _owner;
-        erc20Token.tokenSupply = _tokenSupply;
-        erc20Token.tokenName = _tokneName;
-        erc20Token.tokenSymbol = _tokenSymbol;
-        erc20Token.tokenAddress = _tokenAddress;
-        erc20Token.tokenTxHash = _tokenTxHash;
-        erc20Token.tokenCreateDate = _tokenCreatedDate;
+        require(msg.value >= listingPrice, "Insufficient listing price");
+
+        uint256 _tokenId = erc20Tokens.length + 1;
+        erc20Tokens.push(
+            ERC20Token({
+                tokenID: _tokenId,
+                owner: _owner,
+                tokenSupply: _tokenSupply,
+                tokenName: _tokenName,
+                tokenSymbol: _tokenSymbol,
+                tokenAddress: _tokenAddress,
+                tokenTxHash: _tokenTxHash,
+                tokenCreateDate: _tokenCreateDate
+            })
+        );
 
         emit ERC20TokenListed(_tokenId, _owner, _tokenAddress);
         return (
             _tokenId,
             _owner,
             _tokenSupply,
-            _tokneName,
+            _tokenName,
             _tokenSymbol,
             _tokenAddress
         );
     }
+
     function getAllERC20Tokens() public view returns (ERC20Token[] memory) {
-        ERC20Token[] memory tokens = new ERC20Token[](_tokenIndex);
-        for (uint256 i = 1; i <= _tokenIndex; i++) {
-            tokens[i - 1] = erc20Tokens[i];
-        }
-        return tokens;
+        return erc20Tokens;
     }
+
     function getERC20Token(
         uint256 _tokenId
     ) public view returns (ERC20Token memory) {
-        return erc20Tokens[_tokenId];
+        return erc20Tokens[_tokenId - 1];
     }
 
     function getUserERC20Tokens(
         address _owner
     ) public view returns (ERC20Token[] memory) {
-        ERC20Token[] memory tokens = new ERC20Token[](_tokenIndex);
+        uint256 count = 0;
+        for (uint256 i = 1; i <= erc20Tokens.length; i++) {
+            if (erc20Tokens[i].owner == _owner) {
+                count++;
+            }
+        }
+
+        ERC20Token[] memory tokens = new ERC20Token[](count);
         uint256 j = 0;
-        for (uint256 i = 1; i <= _tokenIndex; i++) {
+        for (uint256 i = 1; i <= erc20Tokens.length; i++) {
             if (erc20Tokens[i].owner == _owner) {
                 tokens[j] = erc20Tokens[i];
                 j++;
@@ -107,20 +115,17 @@ contract LookUpContract {
         return listingPrice;
     }
 
-    function updateListingPrice(
-        uint256 _price,
-        address owner
-    ) public payable onlyOwner {
-        require(
-            contractOwner == owner,
-            "only owner can change the listing price"
-        );
+    function updateListingPrice(uint256 _price) public onlyOwner {
         listingPrice = _price;
     }
-    function withdraw() public payable onlyOwner {
-        require(address(this).balance > 0, "Contract has no balance");
-        require(payable(msg.sender).send(address(this).balance));
+
+    function withdraw() public onlyOwner {
+        uint256 balance = address(this).balance;
+        require(balance > 0, "Contract has no balance");
+        (bool success, ) = contractOwner.call{value: balance}("");
+        require(success, "Transfer failed");
     }
+
     function getContractBalance() external view onlyOwner returns (uint256) {
         return address(this).balance;
     }
