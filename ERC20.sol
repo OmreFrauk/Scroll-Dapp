@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-contract TokenSale is ERC20 {
+contract ERC20Generator is ERC20 {
     constructor(
         uint256 _initialSuppply,
         string memory _tokenName,

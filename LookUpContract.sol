@@ -8,8 +8,8 @@ contract LookUpContract {
         string tokenSupply;
         string tokenName;
         string tokenSymbol;
-        string tokenAddress;
-        string tokenTxHash;
+        address tokenAddress;
+        address tokenTxHash;
         string tokenCreateDate;
     }
 
@@ -22,7 +22,7 @@ contract LookUpContract {
     event ERC20TokenListed(
         uint256 indexed id,
         address indexed owner,
-        string indexed tokenAddress
+        address indexed tokenAddress
     );
 
     modifier onlyOwner() {
@@ -38,8 +38,8 @@ contract LookUpContract {
         string memory _tokenSupply,
         string memory _tokenName,
         string memory _tokenSymbol,
-        string memory _tokenAddress,
-        string memory _tokenTxHash,
+        address _tokenAddress,
+        address _tokenTxHash,
         string memory _tokenCreateDate
     )
         external
@@ -50,7 +50,7 @@ contract LookUpContract {
             string memory,
             string memory,
             string memory,
-            string memory
+            address
         )
     {
         require(msg.value >= listingPrice, "Insufficient listing price");
@@ -94,7 +94,8 @@ contract LookUpContract {
         address _owner
     ) public view returns (ERC20Token[] memory) {
         uint256 count = 0;
-        for (uint256 i = 1; i <= erc20Tokens.length; i++) {
+
+        for (uint256 i = 0; i <= erc20Tokens.length; i++) {
             if (erc20Tokens[i].owner == _owner) {
                 count++;
             }
@@ -102,7 +103,7 @@ contract LookUpContract {
 
         ERC20Token[] memory tokens = new ERC20Token[](count);
         uint256 j = 0;
-        for (uint256 i = 1; i <= erc20Tokens.length; i++) {
+        for (uint256 i = 0; i <= erc20Tokens.length; i++) {
             if (erc20Tokens[i].owner == _owner) {
                 tokens[j] = erc20Tokens[i];
                 j++;
