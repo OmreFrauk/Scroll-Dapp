@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
-import {ERC20Generator} from "./TokenSale.sol";
+import {ERC20Generator} from "./ERC20.sol";
 contract LookUpContract {
     struct ERC20Token {
         uint256 tokenID;
